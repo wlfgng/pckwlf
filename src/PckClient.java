@@ -11,6 +11,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 public class PckClient {
 	private final byte TASK_BYTE = 6;
@@ -140,17 +141,17 @@ public class PckClient {
 		return response;
 	}
 
-	public DatagramPacket makeTaskPacket() {
+	public DatagramPacket makeTaskPacket() throws UnknownHostException {
 		byte[] buf = new byte[5];	
 		buf[0] = TASK_BYTE;
 		byte[] uniqueBytes = intToByteArray(uniqueifier); 
 		System.arraycopy(uniqueBytes, 0, buf, 1, uniqueBytes.length);
 		uniqueifier++;
+		MC_IADDRESS = InetAddress.getByName(MULTICAST_ADDRESS);
 		return (new DatagramPacket(buf, buf.length, MC_IADDRESS, MULTICAST_PORT));
 	}
 
 	public void openDatagramSocket() throws IOException {
-		MC_IADDRESS = InetAddress.getByName(MULTICAST_ADDRESS);
 		datagramSocket = new DatagramSocket();
 	}
 
@@ -159,6 +160,8 @@ public class PckClient {
 		servSocket.setSoTimeout(5000);
 		try {
 			tcpSocket = servSocket.accept();
+			in = new ObjectInputStream(tcpSocket.getInputStream());
+			out = new ObjectOutputStream(tcpSocket.getOutputStream());
 		} catch (SocketTimeoutException e) {
 			servSocket = null;
 			tcpSocket = null;
