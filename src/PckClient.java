@@ -98,7 +98,8 @@ public class PckClient {
 					String pckN = scan.nextLine();
 				System.out.println("Password:");
 				String pw = scan.nextLine();
-				response = client.signUp(pckName, pw);
+				response = client.signUp(pckN, pw);
+				client.processResponse(response);
 				if(response.getType() == RespType.SUCCESS) {
 					System.out.println("Pckwlf account created.");
 					continue;
@@ -223,6 +224,8 @@ public class PckClient {
 				System.out.println("That username is already taken");
 				return new Response(RespType.FAILURE,"Username taken");
 			} else if (resp.getType() == RespType.FAILURE) {
+				loggedIn = true;
+				this.pckName = pckName;
 				return add(LOGIN_TAG, pckName, password);
 			}
 			return resp;
