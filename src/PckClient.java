@@ -109,64 +109,98 @@ public class PckClient {
 	}
 
 	public Response login(String pckName, String password) throws IOException, ClassNotFoundException {
-		requestConnection();
-		Request req = new Request(LOGIN_TAG, pckName, password, ReqType.VERIFY);
-		Response resp = sendRequest(req);
-		if (resp.getType() == RespType.SUCCESS) {
-			this.pckName = pckName;
-			this.loggedIn = true;
-		} else if (resp.getType() == RespType.FAILURE) {
-			System.out.println("Username/password combination invalid");
+		try{
+			requestConnection();
+			Request req = new Request(LOGIN_TAG, pckName, password, ReqType.VERIFY);
+			Response resp = sendRequest(req);
+			if (resp.getType() == RespType.SUCCESS) {
+				this.pckName = pckName;
+				this.loggedIn = true;
+			} else if (resp.getType() == RespType.FAILURE) {
+				System.out.println("Username/password combination invalid");
+			}
+			return resp;
+		} catch(IOException ioe){
+			closeSockets();
+			return new Response(RespType.ERROR,"IO Exception error");
 		}
-		return resp;
 	}
 
 	public Response signUp(String pckName, String password) throws IOException, ClassNotFoundException {
-		requestConnection();
-		Request req = new Request(LOGIN_TAG, pckName, ReqType.VERIFY);
-		Response resp = sendRequest(req);
-		if (resp.getType() == RespType.SUCCESS) {
-			System.out.println("That username is already taken");
-			return new Response(RespType.FAILURE,"Username taken");
-		} else if (resp.getType() == RespType.FAILURE) {
-			return add(LOGIN_TAG, pckName, password);
+		try{
+			requestConnection();
+			Request req = new Request(LOGIN_TAG, pckName, ReqType.VERIFY);
+			Response resp = sendRequest(req);
+			if (resp.getType() == RespType.SUCCESS) {
+				System.out.println("That username is already taken");
+				return new Response(RespType.FAILURE,"Username taken");
+			} else if (resp.getType() == RespType.FAILURE) {
+				return add(LOGIN_TAG, pckName, password);
+			}
+			return resp;
+		} catch(IOException eio){
+			return new Response(RespType.ERROR,"IO Exception error");
 		}
-		return resp;
 	}
 
 	public Response add(String tag, String username, String password) throws IOException, ClassNotFoundException {
 		if(!loggedIn) return new Response(RespType.ERROR,"Not Logged in Error");
-		requestConnection();
-		Request req = new Request(tag, pckName, username, password, ReqType.ADD);
-		return sendRequest(req);
+		try{
+			requestConnection();
+			Request req = new Request(tag, pckName, username, password, ReqType.ADD);
+			return sendRequest(req);
+		} catch(IOException oei){
+			closeSockets();
+			return new Response(RespType.ERROR,"IO Exception error");
+		}
 	}
 
 	public Response update(String tag, String username, String password) throws IOException, ClassNotFoundException {
 		if(!loggedIn) return new Response(RespType.ERROR,"Not Logged in Error");
-		requestConnection();
-		Request req = new Request(tag, pckName, username, password, ReqType.UPDATE);
-		return sendRequest(req);
+		try{
+			requestConnection();
+			Request req = new Request(tag, pckName, username, password, ReqType.UPDATE);
+			return sendRequest(req);
+		} catch(IOException eoe){
+			closeSockets();
+			return new Response(RespType.ERROR,"IO Exception error");
+		}
 	}
 
 	public Response remove(String tag) throws IOException, ClassNotFoundException {
 		if(!loggedIn) return new Response(RespType.ERROR,"Not Logged in Error");
-		requestConnection();
-		Request req = new Request(tag, pckName, ReqType.REMOVE);
-		return sendRequest(req);
+		try{
+			requestConnection();
+			Request req = new Request(tag, pckName, ReqType.REMOVE);
+			return sendRequest(req);
+		} catch(IOException ioe){
+			closeSockets();
+			return new Response(RespType.ERROR,"IO Exception error");
+		}
 	}
 
 	public Response get(String tag) throws IOException, ClassNotFoundException {
 		if(!loggedIn) return new Response(RespType.ERROR,"Not Logged in Error");
-		requestConnection();
-		Request req = new Request(tag, pckName, ReqType.GET);
-		return sendRequest(req);
+		try{
+			requestConnection();
+			Request req = new Request(tag, pckName, ReqType.GET);
+			return sendRequest(req);
+		} catch(IOException ioe){
+			closeSockets();
+			return new Response(RespType.ERROR,"IO Exception error");
+		}
 	}
 
 	public Response getAll() throws IOException, ClassNotFoundException {
 		if(!loggedIn) return new Response(RespType.ERROR,"Not Logged in Error");
-		requestConnection();
-		Request req = new Request("DOESNTMATTER", pckName, ReqType.GETALL);
-		return sendRequest(req);
+		try{
+			requestConnection();
+			Request req = new Request("DOESNTMATTER", pckName, ReqType.GETALL);
+			return sendRequest(req);
+		} catch(IOException ioe){
+			closeSockets();
+			return new Response(RespType.ERROR,"IO Exception error");
+		}
 	}
 
 	public void requestConnection() throws IOException {
