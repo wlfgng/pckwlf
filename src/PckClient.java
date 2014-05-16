@@ -1,3 +1,6 @@
+/* The method functionality should be proper. Change the way input is processed so that you don't have to put in
+ * the pckName every time and it will use the default one thats present in the object.
+ */
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
@@ -88,13 +91,26 @@ public class PckClient {
 	public Response login(String pckName, String password) throws IOException, ClassNotFoundException {
 		requestConnection();
 		Request req = new Request(LOGIN_TAG, pckName, password, ReqType.VERIFY);
-		return sendRequest(req);
+		Response resp = sendRequest(req);
+		if (resp.getType() == RespType.SUCCESS) {
+			this.pckName = pckName;
+		} else if (resp.getType() == RespType.FAILURE) {
+			System.out.println("Username/password combination invalid");
+		}
+		return resp;
 	}
 
 	public Response signUp(String pckName, String password) throws IOException, ClassNotFoundException {
 		requestConnection();
 		Request req = new Request(LOGIN_TAG, pckName, ReqType.VERIFY);
-		return sendRequest(req);
+		Response resp = sendRequest(req);
+		if (resp.getType() == RespType.SUCCESS) {
+			System.out.println("That username is already taken");
+			return resp;
+		} else if (resp.getType() == RespType.FAILURE) {
+			return add(LOGIN_TAG, pckName, password);
+		}
+		return resp;
 	}
 
 	public Response add(String tag, String username, String password) throws IOException, ClassNotFoundException {
@@ -138,6 +154,7 @@ public class PckClient {
 		String initResp = (String) in.readObject();
 		out.writeObject(r);
 		Response response = (Response)in.readObject();
+		closeSockets();
 		return response;
 	}
 
@@ -167,6 +184,12 @@ public class PckClient {
 			tcpSocket = null;
 			return;
 		}
+	}
+
+	public void closeSockets() throws IOException {
+		datagramSocket.close();
+		tcpSocket.close();
+		servSocket.close();
 	}
 
 	private byte[] intToByteArray(int i) {
