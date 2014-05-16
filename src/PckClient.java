@@ -22,6 +22,8 @@ public class PckClient {
 	private final int MULTICAST_PORT = 22699;
 	private final int TCP_PORT = 22710;
 	private final String LOGIN_TAG = "pckwlf-reserved";
+
+	private boolean loggedIn;
 	private static String pckName;
 	private InetAddress MC_IADDRESS;
 	private int uniqueifier = 0;
@@ -30,7 +32,7 @@ public class PckClient {
 	private Socket tcpSocket;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
-	private Scanner scan;
+
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		PckClient client = new PckClient();
@@ -71,6 +73,10 @@ public class PckClient {
 				response = client.get(tag);
 			} else if ("gal".equalsIgnoreCase(op)) {
 				response = client.getAll();
+			} else if("exit".equalsIgnoreCase(op)){
+				System.out.println("Goodbye");
+				client.logout();
+				break;
 			} else {
 				System.out.println("not a valid op");
 				continue;
@@ -84,8 +90,22 @@ public class PckClient {
 				System.out.println("RESULTS");
 				for(Map.Entry entry : response.getResults().entrySet())
 					System.out.println(entry.getKey()+","+entry.getValue());
+			} else if(response.getType() == RespType.ERROR){
+				System.out.println("ERR");
+				System.out.println(response.getMessage());
 			}
 		}
+	}
+
+
+
+	public PckClient(){
+		this.loggedIn = false;
+	}
+
+	public void logout(){
+		this.loggedIn = false;
+		this.pckName = null;
 	}
 
 	public Response login(String pckName, String password) throws IOException, ClassNotFoundException {
@@ -94,6 +114,7 @@ public class PckClient {
 		Response resp = sendRequest(req);
 		if (resp.getType() == RespType.SUCCESS) {
 			this.pckName = pckName;
+			this.loggedIn = true;
 		} else if (resp.getType() == RespType.FAILURE) {
 			System.out.println("Username/password combination invalid");
 		}
@@ -106,7 +127,7 @@ public class PckClient {
 		Response resp = sendRequest(req);
 		if (resp.getType() == RespType.SUCCESS) {
 			System.out.println("That username is already taken");
-			return resp;
+			return new Response(RespType.FAILURE,"Username taken");
 		} else if (resp.getType() == RespType.FAILURE) {
 			return add(LOGIN_TAG, pckName, password);
 		}
@@ -114,30 +135,35 @@ public class PckClient {
 	}
 
 	public Response add(String tag, String username, String password) throws IOException, ClassNotFoundException {
+		if(!loggedIn) return new Response(RespType.ERROR,"Not Logged in Error");
 		requestConnection();
 		Request req = new Request(tag, pckName, username, password, ReqType.ADD);
 		return sendRequest(req);
 	}
 
 	public Response update(String tag, String username, String password) throws IOException, ClassNotFoundException {
+		if(!loggedIn) return new Response(RespType.ERROR,"Not Logged in Error");
 		requestConnection();
 		Request req = new Request(tag, pckName, username, password, ReqType.UPDATE);
 		return sendRequest(req);
 	}
 
 	public Response remove(String tag) throws IOException, ClassNotFoundException {
+		if(!loggedIn) return new Response(RespType.ERROR,"Not Logged in Error");
 		requestConnection();
 		Request req = new Request(tag, pckName, ReqType.REMOVE);
 		return sendRequest(req);
 	}
 
 	public Response get(String tag) throws IOException, ClassNotFoundException {
+		if(!loggedIn) return new Response(RespType.ERROR,"Not Logged in Error");
 		requestConnection();
 		Request req = new Request(tag, pckName, ReqType.GET);
 		return sendRequest(req);
 	}
 
 	public Response getAll() throws IOException, ClassNotFoundException {
+		if(!loggedIn) return new Response(RespType.ERROR,"Not Logged in Error");
 		requestConnection();
 		Request req = new Request("DOESNTMATTER", pckName, ReqType.GETALL);
 		return sendRequest(req);
