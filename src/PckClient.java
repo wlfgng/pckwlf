@@ -1,3 +1,4 @@
+package pckwlf.java;
 /* The method functionality should be proper. Change the way input is processed so that you don't have to put in
  * the pckName every time and it will use the default one thats present in the object.
  */
@@ -40,10 +41,83 @@ public class PckClient {
 		Scanner scan = new Scanner(System.in);
 		Response response = null;
 		for(;;) {
+			System.out.println("login, signup or exit");
+			input = scan.nextLine();
+			if (input.equalsIgnoreCase("login")) {
+				System.out.println("Username: ");
+				String pckN = scan.nextLine();
+				System.out.println("Password: ");
+				String pw = scan.nextLine();
+				response = client.login(pckN, pw);
+				if(response.getType() == RespType.FAILURE) {
+					System.out.println("Incorrect username/password");
+					continue;
+				} else if(response.getType() == RespType.SUCCESS) {
+					for (;;) {
+						System.out.println("Enter operation (add, update, remove, get, getAll, logout):");
+						String op = scan.nextLine();
+						if (op.equalsIgnoreCase("add")) {
+							System.out.println("Tag:");
+							String tag = scan.nextLine();
+							System.out.println("Username");
+							String un = scan.nextLine();
+							System.out.println("Password");
+							pw = scan.nextLine();
+							response = client.add(tag, un, pw);
+							client.processResponse(response);
+						} else if (op.equalsIgnoreCase("update")) {
+							System.out.println("Tag:");
+							String tag = scan.nextLine();
+							System.out.println("Username");
+							String un = scan.nextLine();
+							System.out.println("Password");
+							pw = scan.nextLine();
+							response = client.update(tag, un, pw);
+							client.processResponse(response);
+						} else if (op.equalsIgnoreCase("remove")) {
+							System.out.println("Tag:");
+							String tag = scan.nextLine();
+							response = client.remove(tag);
+							client.processResponse(response);
+						} else if (op.equalsIgnoreCase("get")) {
+							System.out.println("Tag:");
+							String tag = scan.nextLine();
+							response = client.get(tag);
+							client.processResponse(response);
+						} else if (op.equalsIgnoreCase("getAll")) {
+							response = client.getAll();
+							client.processResponse(response);
+						} else if (op.equalsIgnoreCase("logout")) {
+							client.logout();
+							break;
+						}
+					}
+				}
+			} else if (input.equalsIgnoreCase("signup")) {
+				System.out.println("Desired Username:");
+					String pckN = scan.nextLine();
+				System.out.println("Password:");
+				String pw = scan.nextLine();
+				response = client.signUp(pckName, pw);
+				if(response.getType() == RespType.SUCCESS) {
+					System.out.println("Pckwlf account created.");
+					continue;
+				}
+			} else if(response.getType() == RespType.FAILURE) {
+				System.out.println("Username already in use");
+				continue;
+			} else if (input.equalsIgnoreCase("exit")) {
+				System.exit(0);
+			}
+		}
+/*
+		for(;;) {
 			String op = "";
 			String tag = "";
 			String un = "";
 			String pw = "";
+			System.out.println("Enter Operation (add, signup, update, remove, get, getAll, logout):");
+			input = scan.nextLine();
 			System.out.println("ops: sig, add, upd, rem, get, gal");
 			System.out.println("pckName,operation,tag,username,password");
 			System.out.println("Input String to send:");
@@ -95,9 +169,23 @@ public class PckClient {
 				System.out.println(response.getMessage());
 			}
 		}
+*/
 	}
 
-
+	public void processResponse(Response response) {
+		if(response.getType() == RespType.FAILURE)
+			System.out.println("FAIL");
+		else if(response.getType() == RespType.SUCCESS)
+			System.out.println("SUCC");
+		else if(response.getType() == RespType.RESULTS){
+			System.out.println("RESULTS");
+			for(Map.Entry entry : response.getResults().entrySet())
+				System.out.println(entry.getKey()+","+entry.getValue());
+		} else if(response.getType() == RespType.ERROR){
+			System.out.println("ERR");
+			System.out.println(response.getMessage());
+		}
+	}
 
 	public PckClient(){
 		this.loggedIn = false;

@@ -1,3 +1,4 @@
+package pckwlf.java;
 import java.io.Serializable;
 
 public class Request implements Serializable{
